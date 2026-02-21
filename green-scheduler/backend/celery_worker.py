@@ -37,7 +37,8 @@ def get_current_intensity(region="CAISO_NORTH"):
     if not token:
         # Fallback to random if credentials not provided
         import random
-        return random.choice([100, 250, 400])
+        # Fully randomize so the dashboard "greenest" and "worst" jump around dynamically
+        return float(random.choice([20, 40, 80, 100, 150, 250, 300, 400]))
         
     forecast_url = 'https://api2.watttime.org/v3/forecast'
     headers = {'Authorization': f'Bearer {token}'}
@@ -53,7 +54,7 @@ def get_current_intensity(region="CAISO_NORTH"):
             
     # Fallback if API fails
     import random
-    return random.choice([100, 250, 400])
+    return float(random.choice([45, 90, 151, 200, 400]))
 
 @celery_app.task(name="process_job", bind=True, max_retries=10)
 def process_job(self, job_id: str):
@@ -72,15 +73,30 @@ def process_job(self, job_id: str):
     # Logic Engine implementation
     # Get current intensity for the requested region
     intensity = get_current_intensity(job.requested_region)
-    low_threshold = 50
-    high_threshold = 100
+    low_threshold = 120
+    high_threshold = 200
 
     # User inputs
     priority = job.priority
     energy_usage_kwh = job.energy_usage
+    
+    # Calculate universal highest/lowest intensities for this point in time
+    # (Still useful for logging or other logic if needed)
+    available_regions = ["CAISO_NORTH", "ERCOT_ALL", "ISONE_ALL", "NYISO_NYC", "PJM_ALL", "NO1"]
+    highest_carbon = intensity if intensity else 300
+    lowest_carbon = intensity if intensity else 300
+    
+    for r in available_regions:
+        r_intensity = get_current_intensity(r)
+        if r_intensity:
+            if r_intensity > highest_carbon:
+                highest_carbon = r_intensity
+            if r_intensity < lowest_carbon:
+                lowest_carbon = r_intensity
 
     if intensity < low_threshold:
         # Scenario A: Green Window (Run Immediately)
+        # It ran where requested, so technically no "extra" carbon was saved by hopping
         execution_region = job.requested_region
         carbon_used = intensity
         carbon_saved = 0.0
@@ -94,22 +110,17 @@ def process_job(self, job_id: str):
     else:
         # Scenario C: Region-Hop (High Carbon OR High Priority bypassing delay)
         # Bypassing delay means if it's high priority and medium carbon, it hops instead of waiting.
-        available_regions = ["CAISO_NORTH", "ERCOT_ALL", "ISONE_ALL", "NYISO_NYC", "PJM_ALL", "NO1"]
-        
         execution_region = job.requested_region
         carbon_used = intensity if intensity else 300
-        highest_carbon = carbon_used
         
         for r in available_regions:
             r_intensity = get_current_intensity(r)
-            if r_intensity:
-                if r_intensity < carbon_used:
-                    carbon_used = r_intensity
-                    execution_region = r
-                if r_intensity > highest_carbon:
-                    highest_carbon = r_intensity
+            if r_intensity and r_intensity < carbon_used:
+                carbon_used = r_intensity
+                execution_region = r
 
-        carbon_saved = float(highest_carbon - carbon_used) * energy_usage_kwh
+        # Calculate savings relative to the originally requested region
+        carbon_saved = float(intensity - carbon_used) * energy_usage_kwh
         if carbon_saved < 0:
             carbon_saved = 0.0
 

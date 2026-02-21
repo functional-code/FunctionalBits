@@ -43,6 +43,8 @@ function Dashboard() {
                     total_carbon_saved: statsData.total_carbon_saved || 0,
                     current_intensity: statsData.current_intensity || 0,
                     total_jobs_processed: statsData.total_jobs_processed || 0,
+                    highest_region: statsData.highest_region || { region: "Unknown", intensity: 0 },
+                    lowest_region: statsData.lowest_region || { region: "Unknown", intensity: 0 },
                     history: statsData.history || []
                 });
             }
@@ -145,7 +147,7 @@ function Dashboard() {
                         <div className="h-16 mt-4 w-full flex items-end gap-1">
                             {stats.history.slice(-24).map((point, idx) => {
                                 const height = Math.min(100, Math.max(10, (point.intensity / 500) * 100));
-                                const isHigh = point.intensity > 100;
+                                const isHigh = point.intensity > 200;
                                 return (
                                     <div key={idx} className="flex-1 rounded-t-sm group/bar relative" style={{ height: `${height}%`, backgroundColor: isHigh ? '#fb7185' : '#34d399', opacity: 0.8 }}>
                                         <div className="absolute -top-8 left-1/2 -translate-x-1/2 bg-slate-800 text-xs px-2 py-1 rounded opacity-0 group-hover/bar:opacity-100 pointer-events-none whitespace-nowrap z-20">
@@ -161,19 +163,19 @@ function Dashboard() {
                 <Card className="p-6 relative group border-t-4 border-t-emerald-500/50 text-center flex flex-col justify-center items-center">
                     <div className="flex flex-col gap-2 w-full">
                         <div className="flex items-center justify-between w-full">
-                            <h2 className="text-slate-400 font-medium tracking-tight whitespace-nowrap overflow-hidden text-ellipsis">Grid Intensity</h2>
-                            <Activity className={cn("w-5 h-5 ml-1 shrink-0", stats.current_intensity > 100 ? "text-rose-400" : "text-emerald-400")} />
+                            <h2 className="text-slate-400 font-medium tracking-tight whitespace-nowrap overflow-hidden text-ellipsis">Avg Grid Intensity</h2>
+                            <Activity className={cn("w-5 h-5 ml-1 shrink-0", stats.current_intensity > 200 ? "text-rose-400" : "text-emerald-400")} />
                         </div>
                         <div className="flex flex-col items-center justify-center gap-1 mt-4">
-                            <span className={cn("text-5xl font-bold transition-colors group-hover:text-white", stats.current_intensity > 100 ? "text-rose-400" : "text-emerald-400")}>
+                            <span className={cn("text-5xl font-bold transition-colors group-hover:text-white", stats.current_intensity > 200 ? "text-rose-400" : "text-emerald-400")}>
                                 {stats.current_intensity}
                             </span>
                             <span className="text-sm font-medium text-slate-500 mb-1 whitespace-nowrap">gCO₂/kWh</span>
                         </div>
                         <p className={cn("text-xs mt-2 font-medium mx-auto px-2 py-1 rounded-md flex items-center gap-1 w-max transition-all",
-                            stats.current_intensity > 100 ? "bg-rose-500/10 text-rose-400/80" : "bg-emerald-500/10 text-emerald-400/80"
+                            stats.current_intensity > 200 ? "bg-rose-500/10 text-rose-400/80" : "bg-emerald-500/10 text-emerald-400/80"
                         )}>
-                            <Zap className="w-3 h-3" /> {stats.current_intensity > 100 ? "High Carbon" : "Low Carbon"}
+                            <Zap className="w-3 h-3" /> {stats.current_intensity > 200 ? "High Carbon" : "Low Carbon"}
                         </p>
                     </div>
                 </Card>
@@ -185,17 +187,49 @@ function Dashboard() {
                     <ul className="space-y-3 text-xs text-slate-400">
                         <li className="flex items-start gap-2">
                             <span className="text-emerald-400 font-bold shrink-0">Case A:</span>
-                            <span>Low carbon (&lt;50). Runs immediately.</span>
+                            <span>Low carbon (&lt;120). Runs immediately.</span>
                         </li>
                         <li className="flex items-start gap-2">
                             <span className="text-amber-400 font-bold shrink-0">Case B:</span>
-                            <span>Med carbon (50-100), Low Priority. Delays 2m.</span>
+                            <span>Med carbon (120-200). Delays 2m.</span>
                         </li>
                         <li className="flex items-start gap-2">
                             <span className="text-rose-400 font-bold shrink-0">Case C:</span>
-                            <span>High Carbon (&gt;100) or High Prio. Hops region.</span>
+                            <span>High Carbon (&gt;200) or High Prio. Hops region.</span>
                         </li>
                     </ul>
+                </Card>
+            </div>
+
+            {/* Region Extremes Row */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full">
+                <Card className="p-5 flex items-center gap-5 border border-emerald-500/20 bg-emerald-500/5">
+                    <div className="w-12 h-12 rounded-full bg-emerald-500/10 flex items-center justify-center shrink-0">
+                        <Zap className="w-6 h-6 text-emerald-400" />
+                    </div>
+                    <div>
+                        <h3 className="text-sm text-slate-400 font-medium tracking-wide uppercase mb-1">Lowest Carbon Grid</h3>
+                        <div className="flex items-center gap-3">
+                            <span className="text-2xl font-bold tracking-tight text-white">{stats.lowest_region?.region || 'Loading...'}</span>
+                            <span className="text-emerald-400 font-semibold bg-emerald-500/10 px-2 py-0.5 rounded text-sm">
+                                {stats.lowest_region?.intensity || 0} gCO₂
+                            </span>
+                        </div>
+                    </div>
+                </Card>
+                <Card className="p-5 flex items-center gap-5 border border-rose-500/20 bg-rose-500/5">
+                    <div className="w-12 h-12 rounded-full bg-rose-500/10 flex items-center justify-center shrink-0">
+                        <Activity className="w-6 h-6 text-rose-400" />
+                    </div>
+                    <div>
+                        <h3 className="text-sm text-slate-400 font-medium tracking-wide uppercase mb-1">Highest Carbon Grid</h3>
+                        <div className="flex items-center gap-3">
+                            <span className="text-2xl font-bold tracking-tight text-white">{stats.highest_region?.region || 'Loading...'}</span>
+                            <span className="text-rose-400 font-semibold bg-rose-500/10 px-2 py-0.5 rounded text-sm">
+                                {stats.highest_region?.intensity || 0} gCO₂
+                            </span>
+                        </div>
+                    </div>
                 </Card>
             </div>
 
@@ -250,11 +284,11 @@ function Dashboard() {
                         <ul className="space-y-3 text-sm text-slate-400">
                             <li className="flex items-start gap-2">
                                 <div className="w-5 text-center mt-0.5"><span className="text-emerald-400">✓</span></div>
-                                <span>If local grid is &lt; 50 gCO₂/kWh, executes immediately.</span>
+                                <span>If local grid is &lt; 120 gCO₂/kWh, executes immediately.</span>
                             </li>
                             <li className="flex items-start gap-2">
                                 <div className="w-5 text-center mt-0.5"><span className="text-indigo-400">↗</span></div>
-                                <span>If high (&gt; 100 gCO₂), auto-hops to greenest region.</span>
+                                <span>If high (&gt; 200 gCO₂), auto-hops to greenest region.</span>
                             </li>
                         </ul>
                     </Card>

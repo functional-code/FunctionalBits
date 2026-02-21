@@ -68,6 +68,8 @@ class StatsResponse(BaseModel):
     total_carbon_saved: float
     total_jobs_processed: int
     current_intensity: float
+    highest_region: dict
+    lowest_region: dict
     history: List[dict] # Will hold graph data
 
 # --- FastAPI App ---
@@ -142,9 +144,26 @@ def get_stats(db: Session = Depends(get_db)):
         JobRecord.status == 'Completed'
     ).scalar() or 0
 
-    # Fetch real intensity from WattTime API
+    # Calculate true total array of all intensities to get a global average
+    available_regions = ["CAISO_NORTH", "ERCOT_ALL", "ISONE_ALL", "NYISO_NYC", "PJM_ALL", "NO1"]
     from celery_worker import get_current_intensity
-    current_intensity = get_current_intensity("CAISO_NORTH")
+    
+    all_intensities = []
+    highest_carbon = {"region": "Unknown", "intensity": 0}
+    lowest_carbon = {"region": "Unknown", "intensity": 99999}
+    
+    for r in available_regions:
+        intensity = get_current_intensity(r)
+        if intensity:
+            all_intensities.append(intensity)
+            if intensity > highest_carbon["intensity"]:
+                highest_carbon = {"region": r, "intensity": intensity}
+            if intensity < lowest_carbon["intensity"]:
+                lowest_carbon = {"region": r, "intensity": intensity}
+                
+    current_avg_intensity = 0
+    if len(all_intensities) > 0:
+        current_avg_intensity = round(sum(all_intensities) / len(all_intensities), 1)
 
     # Generate mock 48-hour history data for the dashboard chart
     import random
@@ -155,15 +174,17 @@ def get_stats(db: Session = Depends(get_db)):
             "timestamp": time_point.strftime("%H:%M"),
             "intensity": random.randint(80, 400)
         })
-    # Add the real current intensity as the latest point
+    # Add the real average intensity as the latest point
     history.append({
         "timestamp": datetime.datetime.utcnow().strftime("%H:%M"),
-        "intensity": current_intensity
+        "intensity": current_avg_intensity
     })
 
     return {
         "total_carbon_saved": total_saved,
         "total_jobs_processed": total_jobs_processed,
-        "current_intensity": current_intensity,
+        "current_intensity": current_avg_intensity,
+        "highest_region": highest_carbon,
+        "lowest_region": lowest_carbon,
         "history": history
     }
