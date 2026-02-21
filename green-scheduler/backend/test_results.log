@@ -1,0 +1,23 @@
+===========================================
+--- Testing Case 1: Under 50 (mock: 30) ---
+===========================================
+Created Job: 641c88f7-7393-4d68-8f3b-c8b63bf884a2
+Process Job Output: Job 641c88f7-7393-4d68-8f3b-c8b63bf884a2 Completed in CAISO_NORTH saving 0.0 gCO2.
+Final DB Status: Completed
+Execution Region: CAISO_NORTH
+
+===========================================
+--- Testing Case 2: 50 to 100 (mock: 70) ---
+===========================================
+Created Job: 4fe86a58-7a9d-49ed-b783-a25026ef63f7
+Exception Raised (Expected): Retry in 120s: Exception('Delayed due to Medium Carbon')
+Final DB Status (Expected: Delayed): Delayed
+
+===========================================
+--- Testing Case 3: Above 100 (mock: 150) ---
+===========================================
+Created Job: 8c534980-485e-4a3a-be37-ab0251fdfed5
+Process Job Output: Job 8c534980-485e-4a3a-be37-ab0251fdfed5 Completed in NO1 saving 230.0 gCO2.
+Final DB Status (Expected: Completed): Completed
+Execution Region Hopped To: NO1
+Carbon Saved: 230.0

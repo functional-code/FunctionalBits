@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Activity, Zap, Server, Globe, Loader2, CheckCircle, Clock, ArrowRightLeft } from 'lucide-react';
+import { Activity, Zap, Server, Globe, Loader2, CheckCircle, Clock, ArrowRightLeft, Trash2 } from 'lucide-react';
 import { clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
 
@@ -55,6 +55,20 @@ function Dashboard() {
         }
     };
 
+    const deleteJob = async (jobId) => {
+        setJobs(prev => prev.filter(j => j.id !== jobId));
+        try {
+            const res = await fetch(`${API_URL}/jobs/${jobId}`, {
+                method: 'DELETE',
+            });
+            if (!res.ok) {
+                console.error("Failed to delete job on backend");
+            }
+        } catch (e) {
+            console.error("Failed to delete job", e);
+        }
+    };
+
     useEffect(() => {
         const initFetch = async () => {
             setLoading(true);
@@ -76,7 +90,6 @@ function Dashboard() {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     name: jobName,
-                    region: region,
                     energy_usage: parseFloat(energyUsage),
                     priority: priority
                 }),
@@ -132,7 +145,7 @@ function Dashboard() {
                         <div className="h-16 mt-4 w-full flex items-end gap-1">
                             {stats.history.slice(-24).map((point, idx) => {
                                 const height = Math.min(100, Math.max(10, (point.intensity / 500) * 100));
-                                const isHigh = point.intensity > 250;
+                                const isHigh = point.intensity > 100;
                                 return (
                                     <div key={idx} className="flex-1 rounded-t-sm group/bar relative" style={{ height: `${height}%`, backgroundColor: isHigh ? '#fb7185' : '#34d399', opacity: 0.8 }}>
                                         <div className="absolute -top-8 left-1/2 -translate-x-1/2 bg-slate-800 text-xs px-2 py-1 rounded opacity-0 group-hover/bar:opacity-100 pointer-events-none whitespace-nowrap z-20">
@@ -149,18 +162,18 @@ function Dashboard() {
                     <div className="flex flex-col gap-2 w-full">
                         <div className="flex items-center justify-between w-full">
                             <h2 className="text-slate-400 font-medium tracking-tight whitespace-nowrap overflow-hidden text-ellipsis">Grid Intensity</h2>
-                            <Activity className={cn("w-5 h-5 ml-1 shrink-0", stats.current_intensity >= 250 ? "text-rose-400" : "text-emerald-400")} />
+                            <Activity className={cn("w-5 h-5 ml-1 shrink-0", stats.current_intensity > 100 ? "text-rose-400" : "text-emerald-400")} />
                         </div>
                         <div className="flex flex-col items-center justify-center gap-1 mt-4">
-                            <span className={cn("text-5xl font-bold transition-colors group-hover:text-white", stats.current_intensity >= 250 ? "text-rose-400" : "text-emerald-400")}>
+                            <span className={cn("text-5xl font-bold transition-colors group-hover:text-white", stats.current_intensity > 100 ? "text-rose-400" : "text-emerald-400")}>
                                 {stats.current_intensity}
                             </span>
                             <span className="text-sm font-medium text-slate-500 mb-1 whitespace-nowrap">gCO₂/kWh</span>
                         </div>
                         <p className={cn("text-xs mt-2 font-medium mx-auto px-2 py-1 rounded-md flex items-center gap-1 w-max transition-all",
-                            stats.current_intensity >= 250 ? "bg-rose-500/10 text-rose-400/80" : "bg-emerald-500/10 text-emerald-400/80"
+                            stats.current_intensity > 100 ? "bg-rose-500/10 text-rose-400/80" : "bg-emerald-500/10 text-emerald-400/80"
                         )}>
-                            <Zap className="w-3 h-3" /> {stats.current_intensity >= 250 ? "High Carbon" : "Low Carbon"}
+                            <Zap className="w-3 h-3" /> {stats.current_intensity > 100 ? "High Carbon" : "Low Carbon"}
                         </p>
                     </div>
                 </Card>
@@ -172,15 +185,15 @@ function Dashboard() {
                     <ul className="space-y-3 text-xs text-slate-400">
                         <li className="flex items-start gap-2">
                             <span className="text-emerald-400 font-bold shrink-0">Case A:</span>
-                            <span>Low carbon (&lt;150). Runs immediately.</span>
+                            <span>Low carbon (&lt;50). Runs immediately.</span>
                         </li>
                         <li className="flex items-start gap-2">
                             <span className="text-amber-400 font-bold shrink-0">Case B:</span>
-                            <span>Med carbon (150-250), Low Priority. Delays 2m.</span>
+                            <span>Med carbon (50-100), Low Priority. Delays 2m.</span>
                         </li>
                         <li className="flex items-start gap-2">
                             <span className="text-rose-400 font-bold shrink-0">Case C:</span>
-                            <span>High Carbon (&gt;250) or High Prio. Hops region.</span>
+                            <span>High Carbon (&gt;100) or High Prio. Hops region.</span>
                         </li>
                     </ul>
                 </Card>
@@ -204,15 +217,6 @@ function Dashboard() {
                             <div>
                                 <label className="text-xs text-slate-400 font-medium mb-1 block">Job Name</label>
                                 <input required type="text" value={jobName} onChange={e => setJobName(e.target.value)} className="w-full bg-slate-900/50 border border-slate-700 rounded-md px-3 py-2 text-sm text-slate-200 outline-none focus:ring-1 focus:ring-emerald-500" />
-                            </div>
-
-                            <div>
-                                <label className="text-xs text-slate-400 font-medium mb-1 block">Requested Region</label>
-                                <select value={region} onChange={e => setRegion(e.target.value)} className="w-full bg-slate-900/50 border border-slate-700 rounded-md px-3 py-2 text-sm text-slate-200 outline-none focus:ring-1 focus:ring-emerald-500">
-                                    <option value="CAISO_NORTH">CAISO NORTH (California)</option>
-                                    <option value="PJM_NJ">PJM NJ (US East)</option>
-                                    <option value="ERCOT_ALL">ERCOT (Texas)</option>
-                                </select>
                             </div>
 
                             <div className="grid grid-cols-2 gap-4">
@@ -246,11 +250,11 @@ function Dashboard() {
                         <ul className="space-y-3 text-sm text-slate-400">
                             <li className="flex items-start gap-2">
                                 <div className="w-5 text-center mt-0.5"><span className="text-emerald-400">✓</span></div>
-                                <span>If local grid is &lt; 150 gCO₂/kWh, executes immediately.</span>
+                                <span>If local grid is &lt; 50 gCO₂/kWh, executes immediately.</span>
                             </li>
                             <li className="flex items-start gap-2">
                                 <div className="w-5 text-center mt-0.5"><span className="text-indigo-400">↗</span></div>
-                                <span>If high (≥ 150 gCO₂), hops to Norway (20 gCO₂/kWh).</span>
+                                <span>If high (&gt; 100 gCO₂), auto-hops to greenest region.</span>
                             </li>
                         </ul>
                     </Card>
@@ -276,6 +280,7 @@ function Dashboard() {
                                         <th className="px-5 py-4 border-b border-slate-800">Status</th>
                                         <th className="px-5 py-4 border-b border-slate-800">Region</th>
                                         <th className="px-5 py-4 border-b border-slate-800 text-right">Saved</th>
+                                        <th className="px-5 py-4 border-b border-slate-800 text-right"></th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-slate-800/60">
@@ -325,12 +330,11 @@ function Dashboard() {
                                                     <td className="px-5 py-4">
                                                         <div className="flex flex-col gap-0.5">
                                                             <div className="flex items-center gap-1.5 text-slate-300">
-                                                                {job.execution_region !== job.requested_region && job.execution_region !== 'Pending...' ? (
+                                                                {job.execution_region !== 'Pending...' ? (
                                                                     <ArrowRightLeft className="w-3.5 h-3.5 text-amber-500" />
                                                                 ) : null}
                                                                 {job.execution_region}
                                                             </div>
-                                                            <div className="text-[10px] text-slate-500 uppercase tracking-wider mt-0.5">Req: {job.requested_region}</div>
                                                         </div>
                                                     </td>
                                                     <td className="px-5 py-4 text-right">
@@ -343,6 +347,15 @@ function Dashboard() {
                                                         ) : (
                                                             <span className="text-slate-500 text-xs">-</span>
                                                         )}
+                                                    </td>
+                                                    <td className="px-5 py-4 text-right">
+                                                        <button
+                                                            onClick={() => deleteJob(job.id)}
+                                                            className="p-1.5 rounded-md text-slate-500 hover:text-rose-400 hover:bg-rose-500/10 transition-colors inline-flex justify-center items-center"
+                                                            title="Delete Workload"
+                                                        >
+                                                            <Trash2 className="w-4 h-4" />
+                                                        </button>
                                                     </td>
                                                 </tr>
                                             )

@@ -1,4 +1,4 @@
-from fastapi import FastAPI, BackgroundTasks, Depends
+from fastapi import FastAPI, BackgroundTasks, Depends, HTTPException, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import List, Optional
@@ -47,7 +47,7 @@ def get_db():
 # --- Pydantic Models ---
 class JobCreate(BaseModel):
     name: str
-    region: str
+    region: Optional[str] = "CAISO_NORTH"
     energy_usage: float
     priority: str
 
@@ -117,6 +117,15 @@ async def submit_job(job_in: JobCreate, db: Session = Depends(get_db)):
 def read_jobs(skip: int = 0, limit: int = 50, db: Session = Depends(get_db)):
     jobs = db.query(JobRecord).order_by(JobRecord.created_at.desc()).offset(skip).limit(limit).all()
     return jobs
+
+@app.delete("/api/jobs/{job_id}", response_model=dict)
+def delete_job(job_id: str, db: Session = Depends(get_db)):
+    job = db.query(JobRecord).filter(JobRecord.id == job_id).first()
+    if not job:
+        raise HTTPException(status_code=404, detail="Job not found")
+    db.delete(job)
+    db.commit()
+    return {"status": "success"}
 
 @app.get("/api/stats", response_model=StatsResponse)
 def get_stats(db: Session = Depends(get_db)):

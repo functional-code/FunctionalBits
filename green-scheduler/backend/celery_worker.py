@@ -72,9 +72,8 @@ def process_job(self, job_id: str):
     # Logic Engine implementation
     # Get current intensity for the requested region
     intensity = get_current_intensity(job.requested_region)
-    low_threshold = 150
-    high_threshold = 250
-    norway_intensity = 20
+    low_threshold = 50
+    high_threshold = 100
 
     # User inputs
     priority = job.priority
@@ -95,11 +94,24 @@ def process_job(self, job_id: str):
     else:
         # Scenario C: Region-Hop (High Carbon OR High Priority bypassing delay)
         # Bypassing delay means if it's high priority and medium carbon, it hops instead of waiting.
-        execution_region = "Norway (Mocked)"
-        carbon_used = norway_intensity
-        # Carbon saved based on energy usage: (Intensity - Greener_Intensity) * kWh
-        calc_intensity = intensity if intensity else 300 # fallback for calc
-        carbon_saved = float(calc_intensity - norway_intensity) * energy_usage_kwh
+        available_regions = ["CAISO_NORTH", "ERCOT_ALL", "ISONE_ALL", "NYISO_NYC", "PJM_ALL", "NO1"]
+        
+        execution_region = job.requested_region
+        carbon_used = intensity if intensity else 300
+        highest_carbon = carbon_used
+        
+        for r in available_regions:
+            r_intensity = get_current_intensity(r)
+            if r_intensity:
+                if r_intensity < carbon_used:
+                    carbon_used = r_intensity
+                    execution_region = r
+                if r_intensity > highest_carbon:
+                    highest_carbon = r_intensity
+
+        carbon_saved = float(highest_carbon - carbon_used) * energy_usage_kwh
+        if carbon_saved < 0:
+            carbon_saved = 0.0
 
     # Simulate heavy workload (sleep for 5 seconds)
     import time

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { List, Search, Loader2, CheckCircle, Clock, Activity, ArrowRightLeft } from 'lucide-react';
+import { List, Search, Loader2, CheckCircle, Clock, Activity, ArrowRightLeft, Trash2 } from 'lucide-react';
 import { clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
 
@@ -40,6 +40,22 @@ function Jobs() {
 
         return () => clearInterval(interval);
     }, []);
+
+    const deleteJob = async (jobId) => {
+        // Optimistically remove from UI
+        setJobs(prev => prev.filter(j => j.id !== jobId));
+        try {
+            const res = await fetch(`${API_URL}/jobs/${jobId}`, {
+                method: 'DELETE',
+            });
+            if (!res.ok) {
+                // If it fails, we should re-fetch to restore state, but this is a simple hackathon app
+                console.error("Failed to delete job on backend");
+            }
+        } catch (e) {
+            console.error("Failed to delete job", e);
+        }
+    };
 
     const getStatusColor = (status) => {
         switch (status) {
@@ -107,6 +123,7 @@ function Jobs() {
                                 <th className="px-6 py-4 border-b border-slate-800">Action/Region</th>
                                 <th className="px-6 py-4 border-b border-slate-800">Carbon Saved</th>
                                 <th className="px-6 py-4 border-b border-slate-800 text-right">Time</th>
+                                <th className="px-6 py-4 border-b border-slate-800 text-right">Actions</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-800/60">
@@ -147,12 +164,11 @@ function Jobs() {
                                             <td className="px-6 py-4">
                                                 <div className="flex flex-col gap-1.5">
                                                     <div className="flex items-center gap-2 text-slate-300 w-max">
-                                                        {job.execution_region !== job.requested_region && job.execution_region !== 'Pending...' ? (
-                                                            <ArrowRightLeft className="w-4 h-4 text-amber-500" />
+                                                        {job.execution_region !== 'Pending...' ? (
+                                                            <ArrowRightLeft className="w-4 h-4 text-emerald-500" />
                                                         ) : null}
                                                         <span className="font-medium tracking-tight border border-slate-700/50 bg-slate-800/40 px-2.5 py-1 rounded">{job.execution_region}</span>
                                                     </div>
-                                                    <div className="text-[10px] text-slate-500 uppercase tracking-wide ml-1">Req: {job.requested_region}</div>
                                                 </div>
                                             </td>
                                             <td className="px-6 py-4">
@@ -166,6 +182,15 @@ function Jobs() {
                                             </td>
                                             <td className="px-6 py-4 text-right text-slate-400 text-xs">
                                                 {formatTime(job.created_at)}
+                                            </td>
+                                            <td className="px-6 py-4 text-right">
+                                                <button
+                                                    onClick={() => deleteJob(job.id)}
+                                                    className="p-1.5 rounded-md text-slate-500 hover:text-rose-400 hover:bg-rose-500/10 transition-colors inline-flex justify-center items-center"
+                                                    title="Delete Workload"
+                                                >
+                                                    <Trash2 className="w-4 h-4" />
+                                                </button>
                                             </td>
                                         </tr>
                                     )
