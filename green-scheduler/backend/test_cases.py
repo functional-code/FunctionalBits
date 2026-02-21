@@ -36,12 +36,12 @@ def run_tests():
     celery_worker.celery_app.conf.update(task_always_eager=True, task_eager_propagates=True)
     
     test_cases = [
-        {"name": "Combo 1: Int < 120, Priority Low", "mock_int": 100, "priority": "Low", "expected": "Completed (No Hop)"},
-        {"name": "Combo 2: Int < 120, Priority High", "mock_int": 100, "priority": "High", "expected": "Completed (No Hop)"},
+        {"name": "Combo 1: Int < 120, Priority Low", "mock_int": 100, "priority": "Low", "expected": "Running (No Hop)"},
+        {"name": "Combo 2: Int < 120, Priority High", "mock_int": 100, "priority": "High", "expected": "Running (No Hop)"},
         {"name": "Combo 3: 120 <= Int < 200, Priority Low", "mock_int": 150, "priority": "Low", "expected": "Delayed"},
-        {"name": "Combo 4: 120 <= Int < 200, Priority High", "mock_int": 150, "priority": "High", "expected": "Completed (Region Hop)"},
-        {"name": "Combo 5: Int >= 200, Priority Low", "mock_int": 250, "priority": "Low", "expected": "Completed (Region Hop)"},
-        {"name": "Combo 6: Int >= 200, Priority High", "mock_int": 250, "priority": "High", "expected": "Completed (Region Hop)"},
+        {"name": "Combo 4: 120 <= Int < 200, Priority High", "mock_int": 150, "priority": "High", "expected": "Running (Region Hop)"},
+        {"name": "Combo 5: Int >= 200, Priority Low", "mock_int": 250, "priority": "Low", "expected": "Running (Region Hop)"},
+        {"name": "Combo 6: Int >= 200, Priority High", "mock_int": 250, "priority": "High", "expected": "Running (Region Hop)"},
     ]
 
     with open("test_results.log", "w") as f:

@@ -57,11 +57,26 @@ function Jobs() {
         }
     };
 
+    const stopJob = async (jobId) => {
+        setJobs(prev => prev.map(j => j.id === jobId ? { ...j, status: 'Stopped' } : j));
+        try {
+            const res = await fetch(`${API_URL}/jobs/${jobId}/stop`, {
+                method: 'PUT',
+            });
+            if (!res.ok) {
+                console.error("Failed to stop job on backend");
+            }
+        } catch (e) {
+            console.error("Failed to stop job", e);
+        }
+    };
+
     const getStatusColor = (status) => {
         switch (status) {
             case 'Completed': return "bg-emerald-500/10 text-emerald-400 border-emerald-500/20";
             case 'Delayed': return "bg-amber-500/10 text-amber-400 border-amber-500/20";
             case 'Running': return "bg-indigo-500/10 text-indigo-400 border-indigo-500/20 animate-pulse";
+            case 'Stopped': return "bg-slate-700/50 text-slate-300 border-slate-600/50";
             default: return "bg-slate-500/10 text-slate-400 border-slate-500/20";
         }
     };
@@ -184,13 +199,23 @@ function Jobs() {
                                                 {formatTime(job.created_at)}
                                             </td>
                                             <td className="px-6 py-4 text-right">
-                                                <button
-                                                    onClick={() => deleteJob(job.id)}
-                                                    className="p-1.5 rounded-md text-slate-500 hover:text-rose-400 hover:bg-rose-500/10 transition-colors inline-flex justify-center items-center"
-                                                    title="Delete Workload"
-                                                >
-                                                    <Trash2 className="w-4 h-4" />
-                                                </button>
+                                                <div className="flex items-center justify-end gap-2">
+                                                    {job.status === 'Running' && (
+                                                        <button
+                                                            onClick={() => stopJob(job.id)}
+                                                            className="px-2 py-1 text-xs font-medium text-amber-400 hover:text-amber-300 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/20 rounded-md transition-colors"
+                                                        >
+                                                            Stop
+                                                        </button>
+                                                    )}
+                                                    <button
+                                                        onClick={() => deleteJob(job.id)}
+                                                        className="p-1.5 rounded-md text-slate-500 hover:text-rose-400 hover:bg-rose-500/10 transition-colors inline-flex justify-center items-center"
+                                                        title="Delete Workload"
+                                                    >
+                                                        <Trash2 className="w-4 h-4" />
+                                                    </button>
+                                                </div>
                                             </td>
                                         </tr>
                                     )

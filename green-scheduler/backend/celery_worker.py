@@ -54,7 +54,7 @@ def get_current_intensity(region="CAISO_NORTH"):
             
     # Fallback if API fails
     import random
-    return float(random.choice([45, 90, 151, 200, 400]))
+    return float(random.choice([45, 90, 151, 200, 40]))
 
 @celery_app.task(name="process_job", bind=True, max_retries=10)
 def process_job(self, job_id: str):
@@ -124,12 +124,8 @@ def process_job(self, job_id: str):
         if carbon_saved < 0:
             carbon_saved = 0.0
 
-    # Simulate heavy workload (sleep for 5 seconds)
-    import time
-    time.sleep(5)
-
-    # Update job record with results
-    job.status = "Completed"
+    # Set up initial continuous job state
+    job.status = "Running"
     job.execution_region = execution_region
     job.carbon_intensity_used = carbon_used
     job.carbon_saved = carbon_saved
@@ -138,4 +134,44 @@ def process_job(self, job_id: str):
     db.refresh(job)
     db.close()
 
-    return f"Job {job_id} Completed in {execution_region} saving {carbon_saved} gCO2."
+    # Queue the continuous accumulator task to run every 60 seconds
+    accumulate_carbon.apply_async((job_id,), countdown=45)
+
+    return f"Job {job_id} started continuously in {execution_region}."
+
+@celery_app.task(name="accumulate_carbon", bind=True)
+def accumulate_carbon(self, job_id: str):
+    from main import SessionLocal, JobRecord
+    
+    db = SessionLocal()
+    try:
+        job = db.query(JobRecord).filter(JobRecord.id == job_id).first()
+        
+        if not job or job.status != "Running":
+            return f"Job {job_id} stopped or not found."
+            
+        if job.requested_region == job.execution_region:
+            current_savings = 0.0
+        else:
+            intensity_requested = get_current_intensity(job.requested_region)
+            intensity_execution = get_current_intensity(job.execution_region)
+            
+            # Ensure intensities are not None
+            if intensity_requested is not None and intensity_execution is not None:
+                current_savings = float(intensity_requested - intensity_execution) * job.energy_usage
+            else:
+                current_savings = 0.0
+            
+        if current_savings > 0:
+            job.carbon_saved += current_savings
+            
+        db.commit()
+    except Exception as e:
+        print(f"Transient error in accumulate_carbon for {job_id}: {e}")
+    finally:
+        db.close()
+        # Always re-queue for the next tick regardless of errors
+        if not celery_app.conf.task_always_eager:
+            accumulate_carbon.apply_async((job_id,), countdown=45)
+            
+    return f"Accumulated carbon tick processed for {job_id}"

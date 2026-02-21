@@ -1,27 +1,27 @@
 ===========================================
 --- Combo 1: Int < 120, Priority Low ---
 Parameters: Priority=Low, Mocked Region Intensity=100
-Created Job: bedb7a1e-3e55-4b21-b9c0-66f0c8074ee4
-Process Job Output: Job bedb7a1e-3e55-4b21-b9c0-66f0c8074ee4 Completed in CAISO_NORTH saving 280.0 gCO2.
-Final DB Status: Completed
+Created Job: 4771b6ce-2f26-4cb0-8020-7afc87bcad17
+Process Job Output: Job 4771b6ce-2f26-4cb0-8020-7afc87bcad17 started continuously in CAISO_NORTH.
+Final DB Status: Running
 Execution Region: CAISO_NORTH
-Carbon Saved: 280.0
+Carbon Saved: 0.0
 ===========================================
 
 ===========================================
 --- Combo 2: Int < 120, Priority High ---
 Parameters: Priority=High, Mocked Region Intensity=100
-Created Job: fd7aacc2-91a3-42bf-a24b-6dd1e17c6b53
-Process Job Output: Job fd7aacc2-91a3-42bf-a24b-6dd1e17c6b53 Completed in CAISO_NORTH saving 280.0 gCO2.
-Final DB Status: Completed
+Created Job: ad589aeb-0280-4e6f-b5bb-9caa9d6bf236
+Process Job Output: Job ad589aeb-0280-4e6f-b5bb-9caa9d6bf236 started continuously in CAISO_NORTH.
+Final DB Status: Running
 Execution Region: CAISO_NORTH
-Carbon Saved: 280.0
+Carbon Saved: 0.0
 ===========================================
 
 ===========================================
 --- Combo 3: 120 <= Int < 200, Priority Low ---
 Parameters: Priority=Low, Mocked Region Intensity=150
-Created Job: adcefd6a-ef3f-43f8-ae75-becb686a5bf5
+Created Job: e6b83ced-5948-4dff-be54-fd1c974edf5a
 Exception Raised: Retry in 120s: Exception('Delayed due to Medium Carbon')
 Final DB Status: Delayed
 ===========================================
@@ -29,30 +29,30 @@ Final DB Status: Delayed
 ===========================================
 --- Combo 4: 120 <= Int < 200, Priority High ---
 Parameters: Priority=High, Mocked Region Intensity=150
-Created Job: bed6e15f-44d5-4b7d-9969-4e86cff831e2
-Process Job Output: Job bed6e15f-44d5-4b7d-9969-4e86cff831e2 Completed in NO1 saving 280.0 gCO2.
-Final DB Status: Completed
+Created Job: 18044aae-76b5-4d08-905c-a09dcd8468f2
+Process Job Output: Job 18044aae-76b5-4d08-905c-a09dcd8468f2 started continuously in NO1.
+Final DB Status: Running
 Execution Region: NO1
-Carbon Saved: 280.0
+Carbon Saved: 260.0
 ===========================================
 
 ===========================================
 --- Combo 5: Int >= 200, Priority Low ---
 Parameters: Priority=Low, Mocked Region Intensity=250
-Created Job: d04d3488-9b9f-43b6-a869-d19136e7e118
-Process Job Output: Job d04d3488-9b9f-43b6-a869-d19136e7e118 Completed in NO1 saving 280.0 gCO2.
-Final DB Status: Completed
+Created Job: c1a81ffb-fa7e-4590-a261-9e5ed6541cfc
+Process Job Output: Job c1a81ffb-fa7e-4590-a261-9e5ed6541cfc started continuously in NO1.
+Final DB Status: Running
 Execution Region: NO1
-Carbon Saved: 280.0
+Carbon Saved: 460.0
 ===========================================
 
 ===========================================
 --- Combo 6: Int >= 200, Priority High ---
 Parameters: Priority=High, Mocked Region Intensity=250
-Created Job: 3fd3aab0-809a-4dcc-ad74-275e5a59c141
-Process Job Output: Job 3fd3aab0-809a-4dcc-ad74-275e5a59c141 Completed in NO1 saving 280.0 gCO2.
-Final DB Status: Completed
+Created Job: 1e1ff41a-d2ee-44bc-b276-abdab71b4ee2
+Process Job Output: Job 1e1ff41a-d2ee-44bc-b276-abdab71b4ee2 started continuously in NO1.
+Final DB Status: Running
 Execution Region: NO1
-Carbon Saved: 280.0
+Carbon Saved: 460.0
 ===========================================
 

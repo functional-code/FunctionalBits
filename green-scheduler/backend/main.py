@@ -129,6 +129,17 @@ def delete_job(job_id: str, db: Session = Depends(get_db)):
     db.commit()
     return {"status": "success"}
 
+@app.put("/api/jobs/{job_id}/stop", response_model=JobResponse)
+def stop_job(job_id: str, db: Session = Depends(get_db)):
+    job = db.query(JobRecord).filter(JobRecord.id == job_id).first()
+    if not job:
+        raise HTTPException(status_code=404, detail="Job not found")
+    if job.status == "Running":
+        job.status = "Stopped"
+        job.completed_at = datetime.datetime.utcnow()
+        db.commit()
+    return job
+
 @app.get("/api/stats", response_model=StatsResponse)
 def get_stats(db: Session = Depends(get_db)):
     # Calculate total saved in last 48 hours
@@ -137,11 +148,11 @@ def get_stats(db: Session = Depends(get_db)):
     from sqlalchemy import func
     total_saved = db.query(func.sum(JobRecord.carbon_saved)).filter(
         JobRecord.created_at >= forty_eight_hours_ago,
-        JobRecord.status == 'Completed'
+        JobRecord.status.in_(['Completed', 'Stopped', 'Running'])
     ).scalar() or 0.0
 
     total_jobs_processed = db.query(func.count(JobRecord.id)).filter(
-        JobRecord.status == 'Completed'
+        JobRecord.status.in_(['Completed', 'Stopped', 'Running'])
     ).scalar() or 0
 
     # Calculate true total array of all intensities to get a global average
