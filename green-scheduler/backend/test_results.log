@@ -1,0 +1,58 @@
+===========================================
+--- Combo 1: Int < 120, Priority Low ---
+Parameters: Priority=Low, Mocked Region Intensity=100
+Created Job: 4771b6ce-2f26-4cb0-8020-7afc87bcad17
+Process Job Output: Job 4771b6ce-2f26-4cb0-8020-7afc87bcad17 started continuously in CAISO_NORTH.
+Final DB Status: Running
+Execution Region: CAISO_NORTH
+Carbon Saved: 0.0
+===========================================
+
+===========================================
+--- Combo 2: Int < 120, Priority High ---
+Parameters: Priority=High, Mocked Region Intensity=100
+Created Job: ad589aeb-0280-4e6f-b5bb-9caa9d6bf236
+Process Job Output: Job ad589aeb-0280-4e6f-b5bb-9caa9d6bf236 started continuously in CAISO_NORTH.
+Final DB Status: Running
+Execution Region: CAISO_NORTH
+Carbon Saved: 0.0
+===========================================
+
+===========================================
+--- Combo 3: 120 <= Int < 200, Priority Low ---
+Parameters: Priority=Low, Mocked Region Intensity=150
+Created Job: e6b83ced-5948-4dff-be54-fd1c974edf5a
+Exception Raised: Retry in 120s: Exception('Delayed due to Medium Carbon')
+Final DB Status: Delayed
+===========================================
+
+===========================================
+--- Combo 4: 120 <= Int < 200, Priority High ---
+Parameters: Priority=High, Mocked Region Intensity=150
+Created Job: 18044aae-76b5-4d08-905c-a09dcd8468f2
+Process Job Output: Job 18044aae-76b5-4d08-905c-a09dcd8468f2 started continuously in NO1.
+Final DB Status: Running
+Execution Region: NO1
+Carbon Saved: 260.0
+===========================================
+
+===========================================
+--- Combo 5: Int >= 200, Priority Low ---
+Parameters: Priority=Low, Mocked Region Intensity=250
+Created Job: c1a81ffb-fa7e-4590-a261-9e5ed6541cfc
+Process Job Output: Job c1a81ffb-fa7e-4590-a261-9e5ed6541cfc started continuously in NO1.
+Final DB Status: Running
+Execution Region: NO1
+Carbon Saved: 460.0
+===========================================
+
+===========================================
+--- Combo 6: Int >= 200, Priority High ---
+Parameters: Priority=High, Mocked Region Intensity=250
+Created Job: 1e1ff41a-d2ee-44bc-b276-abdab71b4ee2
+Process Job Output: Job 1e1ff41a-d2ee-44bc-b276-abdab71b4ee2 started continuously in NO1.
+Final DB Status: Running
+Execution Region: NO1
+Carbon Saved: 460.0
+===========================================
+
